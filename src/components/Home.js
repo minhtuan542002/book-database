@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Container from 'react-bootstrap/Container';
-import Table from 'react-bootstrap/Table';
-import Form from 'react-bootstrap/Form';
-import Button from 'react-bootstrap/Button';
-import Spinner from 'react-bootstrap/Spinner';
-import Alert from 'react-bootstrap/Alert';
-import Offcanvas from 'react-bootstrap/Offcanvas';
+import {
+  Container,
+  Table,
+  Form,
+  Button,
+  Spinner,
+  Alert,
+  Offcanvas} from 'react-bootstrap';
 
 function Home() {
   const [comics, setComics] = useState([]);
