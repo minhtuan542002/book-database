@@ -81,14 +81,13 @@ function App() {
 
   return (
     <div>
-      <AuthNav user={user} onLogout={() => setUser(null)} />
-      <Container className="mt-4">
-        <AppRouter 
-          isAuthenticated={!!user}
-          comics={comics}
-          loading={loading}
-        />
-      </Container>
+      {/* <AuthNav user={user} onLogout={() => setUser(null)} /> */}
+
+      <AppRouter 
+        isAuthenticated={!!user}
+        comics={comics}
+        loading={loading}
+      />
     </div>
   );
 }
