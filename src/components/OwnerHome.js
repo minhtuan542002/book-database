@@ -1,220 +1,362 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { 
-    Container, 
-    Table, 
-    Form, 
-    Button, 
-    Spinner, 
-    Alert, 
-    Offcanvas, 
-    Modal } from 'react-bootstrap';
-import ComicCard from './ComicCard';
+import React, { useState } from 'react';
+import {
+  Container,
+  Form,
+  Button,
+  Collapse,
+  Modal
+} from 'react-bootstrap';
+import FilterWrapper from "./FilterWrapper"
+import ComicListEdit from './ComicListEdit';
 
 function OwnerHome() {
   const [comics, setComics] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [currentComic, setCurrentComic] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  // Initial empty comic state
-  const emptyComic = {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedComic, setSelectedComic] = useState(null);
+  const [newComic, setNewComic] = useState({
     title: '',
     author: '',
-    publisher: 'DC Comics',
+    publisher: '',
     genre: '',
-    chapters: 0,
+    chapters: '',
     reviewComment: '',
-    rating: 0,
-    ranking: 0
+    rating: '',
+    ranking: ''
+  });
+
+  const handleAddComic = (e) => {
+    e.preventDefault();
+    const highestId = Math.max(...comics.map(comic => comic.id));
+    const comicToAdd = {
+      ...newComic,
+      id: highestId + 1,
+      chapters: Number(newComic.chapters),
+      rating: Number(newComic.rating),
+      ranking: Number(newComic.ranking)
+    };
+    
+    setComics([...comics, comicToAdd]);
+    setShowAddForm(false);
+    setNewComic({
+      title: '',
+      author: '',
+      publisher: '',
+      genre: '',
+      chapters: '',
+      reviewComment: '',
+      rating: '',
+      ranking: ''
+    });
   };
 
-  // Fetch comics from API
-  const fetchComics = async () => {
-    try {
-      const response = await axios.get('https://example-domain.com/goals');
-      setComics(response.data);
-    } catch (error) {
-      setError('Failed to load comics');
-    } finally {
-      setLoading(false);
-    }
+  const handleEditComic = (e) => {
+    e.preventDefault();
+    setComics(comics.map(comic => 
+      comic.id === selectedComic.id ? selectedComic : comic
+    ));
+    setSelectedComic(null);
   };
 
-  useEffect(() => {
-    fetchComics();
-  }, []);
-
-  // CRUD Operations
-  const handleSave = async (comicData) => {
-    try {
-      if (comicData.id) {
-        await axios.put(`https://example-domain.com/goals/${comicData.id}`, comicData);
-      } else {
-        await axios.post('https://example-domain.com/goals', comicData);
-      }
-      fetchComics();
-    } catch (error) {
-      setError('Operation failed');
-    }
+  const handleRowClick = (comic) => {
+    setSelectedComic({...comic});
   };
 
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`https://example-domain.com/goals/${id}`);
-      fetchComics();
-    } catch (error) {
-      setError('Delete failed');
-    }
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewComic(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
-
-  // Modal Form
-  const ComicForm = () => (
-    <Modal show={showModal} onHide={() => setShowModal(false)}>
-      <Modal.Header closeButton>
-        <Modal.Title>{currentComic.id ? 'Edit Comic' : 'Add Comic'}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form onSubmit={(e) => {
-          e.preventDefault();
-          handleSave(currentComic);
-          setShowModal(false);
-        }}>
-          <Form.Group className="mb-3">
-            <Form.Label>Title*</Form.Label>
-            <Form.Control 
-              required
-              value={currentComic.title}
-              onChange={(e) => setCurrentComic({...currentComic, title: e.target.value})}
-            />
-          </Form.Group>
-          
-          <Form.Group className="mb-3">
-            <Form.Label>Author*</Form.Label>
-            <Form.Control 
-              required
-              value={currentComic.author}
-              onChange={(e) => setCurrentComic({...currentComic, author: e.target.value})}
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Publisher*</Form.Label>
-            <Form.Select 
-              value={currentComic.publisher}
-              onChange={(e) => setCurrentComic({...currentComic, publisher: e.target.value})}
-            >
-              <option>DC Comics</option>
-              <option>Marvel Comics</option>
-              <option>Image Comics</option>
-            </Form.Select>
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Rating</Form.Label>
-            <Form.Control 
-              type="number"
-              min="0"
-              max="5"
-              step="0.1"
-              value={currentComic.rating}
-              onChange={(e) => setCurrentComic({...currentComic, rating: e.target.value})}
-            />
-          </Form.Group>
-
-          <div className="d-flex justify-content-end">
-            <Button variant="secondary" onClick={() => setShowModal(false)} className="me-2">
-              Cancel
-            </Button>
-            <Button variant="primary" type="submit">
-              Save
-            </Button>
-          </div>
-        </Form>
-      </Modal.Body>
-    </Modal>
-  );
 
   return (
     <Container>
-      <h1 className="text-center my-4">Manage Comics</h1>
-      
-      <div className="d-flex justify-content-between mb-4">
-        <Button 
-          variant="primary" 
-          onClick={() => {
-            setCurrentComic(emptyComic);
-            setShowModal(true);
-          }}
+      <h1 className="text-center">Manage Comics</h1>
+      <div className="mb-3 d-flex justify-content-between">
+        <Button
+          variant="success"
+          onClick={() => setShowAddForm(!showAddForm)}
+          aria-controls="add-comic-form"
+          aria-expanded={showAddForm}
         >
-          Add New Comic
+          {showAddForm ? 'Cancel' : 'Add New Comic'}
         </Button>
-        
-        <Form.Control
-          type="search"
-          placeholder="Search comics..."
-          style={{ width: '300px' }}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
       </div>
 
-      {error && <Alert variant="danger">{error}</Alert>}
+      <Collapse in={showAddForm}>
+      <div id="add-comic-form" className="mb-4 card card-body">
+          <h5 className="mb-3">Add New Comic</h5>
+          <Form onSubmit={handleAddComic}>
+            <div className="row g-2 mb-3">
+              <div className="col-1">
+                <Form.Group>
+                  <Form.Label>Ranking</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="ranking"
+                    value={newComic.ranking}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+              </div>
+              <div className="col-3">
+                <Form.Group>
+                  <Form.Label>Title *</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="title"
+                    value={newComic.title}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+              </div>
+              <div className="col-3">
+                <Form.Group>
+                  <Form.Label>Author *</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="author"
+                    value={newComic.author}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+              </div>
+              <div className="col-2">
+                <Form.Group>
+                  <Form.Label>Publisher *</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="publisher"
+                    value={newComic.publisher}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+              </div>
+              <div className="col-2">
+                <Form.Group>
+                  <Form.Label>Genre</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="genre"
+                    value={newComic.genre}
+                    onChange={handleInputChange}
+                  />
+                </Form.Group>
+              </div>
+              <div className="col-1">
+                <Form.Group>
+                  <Form.Label>Chapters</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="chapters"
+                    value={newComic.chapters}
+                    onChange={handleInputChange}
+                  />
+                </Form.Group>
+              </div>
+            </div>
 
-      {loading ? (
-        <div className="text-center">
-          <Spinner animation="border" />
+            <div className="row g-2 mb-3">
+              <div className="col-1">
+                <Form.Group>
+                  <Form.Label>Rating</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="rating"
+                    min="1"
+                    max="5"
+                    step="0.1"
+                    value={newComic.rating}
+                    onChange={handleInputChange}
+                  />
+                </Form.Group>
+              </div>
+            
+              <div className="col-11">
+                <Form.Group>
+                  <Form.Label>Review Comment</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={1}
+                    name="reviewComment"
+                    value={newComic.reviewComment}
+                    onChange={handleInputChange}
+                  />
+                </Form.Group>
+              </div>
+            </div>
+
+            <div className="d-flex justify-content-end gap-2">
+              <Button variant="success" type="submit">
+                Add Comic
+              </Button>
+            </div>
+          </Form>
         </div>
-      ) : (
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Author</th>
-              <th>Publisher</th>
-              <th>Rating</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {comics
-              .filter(comic => 
-                comic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                comic.author.toLowerCase().includes(searchTerm.toLowerCase())
-              )
-              .map(comic => (
-                <tr key={comic.id}>
-                  <td>{comic.title}</td>
-                  <td>{comic.author}</td>
-                  <td>{comic.publisher}</td>
-                  <td>{comic.rating}/5</td>
-                  <td>
-                    <Button 
-                      variant="warning" 
-                      className="me-2"
-                      onClick={() => {
-                        setCurrentComic(comic);
-                        setShowModal(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="danger"
-                      onClick={() => handleDelete(comic.id)}
-                    >
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </Table>
-      )}
+      </Collapse>
 
-      <ComicForm />
+      <Modal show={!!selectedComic} onHide={() => setSelectedComic(null)} size="xl">
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Comic</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedComic && (
+            <Form onSubmit={handleEditComic}>
+              <div className="row g-2 mb-3">
+                <div className="col-1">
+                  <Form.Group>
+                    <Form.Label>Ranking</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="ranking"
+                      value={selectedComic.ranking}
+                      onChange={(e) => setSelectedComic({
+                        ...selectedComic,
+                        ranking: e.target.value
+                      })}
+                    />
+                  </Form.Group>
+                </div>
+                <div className="col-3">
+                  <Form.Group>
+                    <Form.Label>Title *</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="title"
+                      value={selectedComic.title}
+                      onChange={(e) => setSelectedComic({
+                        ...selectedComic,
+                        title: e.target.value
+                      })}
+                      required
+                    />
+                  </Form.Group>
+                </div>
+                <div className="col-3">
+                  <Form.Group>
+                    <Form.Label>Author *</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="author"
+                      value={selectedComic.author}
+                      onChange={(e) => setSelectedComic({
+                        ...selectedComic,
+                        author: e.target.value
+                      })}
+                      required
+                    />
+                  </Form.Group>
+                </div>
+                <div className="col-2">
+                  <Form.Group>
+                    <Form.Label>Publisher *</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="publisher"
+                      value={selectedComic.publisher}
+                      onChange={(e) => setSelectedComic({
+                        ...selectedComic,
+                        publisher: e.target.value
+                      })}
+                      required
+                    />
+                  </Form.Group>
+                </div>
+                <div className="col-2">
+                  <Form.Group>
+                    <Form.Label>Genre</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="genre"
+                      value={selectedComic.genre}
+                      onChange={(e) => setSelectedComic({
+                        ...selectedComic,
+                        genre: e.target.value
+                      })}
+                    />
+                  </Form.Group>
+                </div>
+                
+                <div className="col-1">
+                  <Form.Group>
+                    <Form.Label>Chapters</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="chapters"
+                      value={selectedComic.chapters}
+                      onChange={(e) => setSelectedComic({
+                        ...selectedComic,
+                        chapters: e.target.value
+                      })}
+                    />
+                  </Form.Group>
+                </div>
+              </div>
+
+              <div className="row g-2 mb-3">
+                <div className="col-1">
+                  <Form.Group>
+                    <Form.Label>Rating</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="rating"
+                      min="1"
+                      max="5"
+                      step="0.1"
+                      value={selectedComic.rating}
+                      onChange={(e) => setSelectedComic({
+                        ...selectedComic,
+                        rating: e.target.value
+                      })}
+                    />
+                  </Form.Group>
+                </div>
+                <div className="col-11">
+                  <Form.Group>
+                    <Form.Label>Review Comment</Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      rows={1}
+                      name="reviewComment"
+                      value={selectedComic.reviewComment}
+                      onChange={(e) => setSelectedComic({
+                        ...selectedComic,
+                        reviewComment: e.target.value
+                      })}
+                    />
+                  </Form.Group>
+                </div>
+              </div>
+
+              {/* Other fields similar to Add form */}
+              
+              <div className="d-flex justify-content-between align-items-center gap-2 mt-3">
+
+                <Button variant="danger">Delete</Button>
+
+                <div className="d-flex gap-2">
+                  <Button variant="secondary" onClick={() => setSelectedComic(null)}>
+                    Cancel
+                  </Button>
+                  <Button variant="success" type="submit">
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+
+            </Form>
+          )}
+        </Modal.Body>
+      </Modal>
+
+      <FilterWrapper>
+        <ComicListEdit onClick={handleRowClick}/>
+      </FilterWrapper>
+
     </Container>
   );
 }

@@ -1,13 +1,18 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Routes, Outlet } from 'react-router-dom';
+import { 
+  BrowserRouter as Router, 
+  Route, 
+  Routes, 
+  Outlet, 
+  Navigate } from 'react-router-dom';
 import Home from "./components/Home";
 import OwnerHome from "./components/OwnerHome";
 import Login from "./components/Login";
 import AuthNav from "./components/AuthNav";
 import NotFoundPage from "./components/NotFoundPage";
-import ProtectedRoute from './components/ProtectedRoute';
+import { useAuth } from './contexts/AuthContext';
 
-const AppRouter = ({ isAuthenticated }) => {
+const AppRouter = () => {
   const WithNavbar = () => {
     return (
       <>
@@ -17,6 +22,14 @@ const AppRouter = ({ isAuthenticated }) => {
         </div>
       </>
     );
+  };
+
+  const ProtectedRoute = ({ children }) => {
+    const { user } = useAuth();
+    if (user==null) {
+      return <Navigate to="/login" replace />;
+    }
+    return children;
   };
 
   return (
