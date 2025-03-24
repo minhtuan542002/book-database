@@ -8,9 +8,11 @@ import {
 } from 'react-bootstrap';
 import FilterWrapper from "./FilterWrapper"
 import ComicListEdit from './ComicListEdit';
+import { useAuth } from '../contexts/AuthContext';
+import { useComics } from "../contexts/ComicContext"
+import { createComic, updateComic, deleteComic, fetchComics } from '../api/comicService';
 
 function OwnerHome() {
-  const [comics, setComics] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedComic, setSelectedComic] = useState(null);
   const [newComic, setNewComic] = useState({
@@ -24,18 +26,15 @@ function OwnerHome() {
     ranking: ''
   });
 
-  const handleAddComic = (e) => {
-    e.preventDefault();
-    const highestId = Math.max(...comics.map(comic => comic.id));
-    const comicToAdd = {
-      ...newComic,
-      id: highestId + 1,
-      chapters: Number(newComic.chapters),
-      rating: Number(newComic.rating),
-      ranking: Number(newComic.ranking)
-    };
-    
-    setComics([...comics, comicToAdd]);
+  const {refreshComics} = useComics();
+  const { token } = useAuth();
+
+  const handleAddComic = async (e) => {
+    e.preventDefault();    
+    if (!token) return;
+
+    await createComic(newComic, token);
+    await refreshComics();
     setShowAddForm(false);
     setNewComic({
       title: '',
@@ -49,11 +48,20 @@ function OwnerHome() {
     });
   };
 
-  const handleEditComic = (e) => {
+  const handleEditComic = async (e) => {
     e.preventDefault();
-    setComics(comics.map(comic => 
-      comic.id === selectedComic.id ? selectedComic : comic
-    ));
+    if (!token || !selectedComic) return;
+
+    await updateComic(selectedComic, token);
+    await refreshComics();
+    setSelectedComic(null);
+  };
+
+  const handleDeleteComic = async () => {
+    if (!token || !selectedComic) return;
+
+    await deleteComic(selectedComic.id, token);
+    await refreshComics();
     setSelectedComic(null);
   };
 
@@ -336,7 +344,9 @@ function OwnerHome() {
               
               <div className="d-flex justify-content-between align-items-center gap-2 mt-3">
 
-                <Button variant="danger">Delete</Button>
+                <Button variant="danger"  onClick={handleDeleteComic}>
+                  Delete
+                </Button>
 
                 <div className="d-flex gap-2">
                   <Button variant="secondary" onClick={() => setSelectedComic(null)}>

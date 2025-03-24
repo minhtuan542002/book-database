@@ -18,8 +18,8 @@ export const updateComic = async (comic, token) => {
   });
 };
 
-export const deleteComic = async (comic, token) => {
-  return axios.delete(`${API_BASE_URL}/comics`, comic, {
+export const deleteComic = async (id, token) => {
+  return axios.delete(`${API_BASE_URL}/comics/${id}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
 };
