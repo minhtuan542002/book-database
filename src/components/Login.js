@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { login } from '../api/authService';
 import {
   Container,
   Row,
@@ -16,7 +16,8 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login: authLogin } = useAuth();
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,10 +25,27 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await login(email, password);
-      authLogin(response.data.token, response.data.user);
+      await login(email, password);
+      navigate('/manage');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      let errorMessage = 'Login failed';
+      if (err.response) {
+        // Handle Cognito-specific error codes
+        switch (err.response.data.error) {
+          case 'InvalidParameterException':
+            errorMessage = 'Invalid email or password format';
+            break;
+          case 'NotAuthorizedException':
+            errorMessage = 'Incorrect email or password';
+            break;
+          case 'UserNotFoundException':
+            errorMessage = 'User does not exist';
+            break;
+          default:
+            errorMessage = err.response.data.error || 'Login failed';
+        }
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -89,7 +107,7 @@ const LoginPage = () => {
 
                 <div className="text-center mt-3">
                   <small className="text-muted">
-                    Don't have an account? <a href="/register">Register here</a>
+                    Don't have an account? <a href="/">You aren't supposed to</a>
                   </small>
                 </div>
               </Card.Body>

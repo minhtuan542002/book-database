@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = "https://your-gateway-api-url.com";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 export const fetchComics = async () => {
   return axios.get(`${API_BASE_URL}/comics`);

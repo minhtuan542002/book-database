@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Form,
@@ -28,6 +28,25 @@ function OwnerHome() {
 
   const {refreshComics} = useComics();
   const { token } = useAuth();
+
+  // useEffect(() => {
+  //   const refreshTokenInterval = setInterval(async () => {
+  //     try {
+  //       const session = await Auth.currentSession();
+  //       const expiry = session.getAccessToken().getExpiration();
+  //       const now = Math.floor(Date.now() / 1000);
+
+  //       if (expiry - now < 300) { // If token expires in <5 min, refresh it
+  //         console.log("Refreshing token...");
+  //         await Auth.currentSession(); // This will refresh the token internally
+  //       }
+  //     } catch (error) {
+  //       console.error("Error refreshing token:", error);
+  //     }
+  //   }, 300000); // Check every 5 minutes
+
+  //   return () => clearInterval(refreshTokenInterval);
+  // }, []);
 
   const handleAddComic = async (e) => {
     e.preventDefault();    
