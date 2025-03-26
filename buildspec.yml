@@ -1,9 +1,7 @@
-version: 0.1
+version: 1
 
 phases:
   install:
-    runtime-versions:
-      nodejs: 18
     commands:
       - echo Installing dependencies...
       - npm ci --cache .npm --prefer-offline
